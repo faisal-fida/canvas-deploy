@@ -1,0 +1,6 @@
+production:
+  address: "localhost"
+  port: "25"
+  domain: "smalms.ibsapp.com"
+  outgoing_address: "canvas@smalms.ibsapp.com"
+  default_name: "CNIT Canvas"

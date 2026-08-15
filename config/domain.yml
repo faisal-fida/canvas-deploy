@@ -1,0 +1,3 @@
+production:
+  domain: "smalms.ibsapp.com"
+  ssl: true

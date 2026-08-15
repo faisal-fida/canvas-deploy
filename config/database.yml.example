@@ -1,0 +1,10 @@
+production:
+  adapter: postgresql
+  encoding: utf8
+  database: canvas_production
+  host: postgres
+  port: 5432
+  username: canvas
+  password: change-me
+  timeout: 5000
+  pool: 20

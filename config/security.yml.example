@@ -1,0 +1,5 @@
+production:
+  encryption_key: generate-a-random-hex-key
+  jwt_encryption_keys:
+    - generate-a-random-hex-key
+  lti_iss: 'https://your-canvas-domain.example.com'

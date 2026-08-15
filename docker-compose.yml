@@ -1,0 +1,85 @@
+name: canvas
+
+networks:
+  canvas-internal:
+    driver: bridge
+  edge:
+    external: true
+
+volumes:
+  canvas_pg_data:
+  canvas_redis_data:
+  canvas_files:
+  canvas_log:
+
+x-canvas-config: &canvas-config
+  - ./config/database.yml:/usr/src/app/config/database.yml:ro
+  - ./config/redis.yml:/usr/src/app/config/redis.yml:ro
+  - ./config/cache_store.yml:/usr/src/app/config/cache_store.yml:ro
+  - ./config/security.yml:/usr/src/app/config/security.yml:ro
+  - ./config/domain.yml:/usr/src/app/config/domain.yml:ro
+  - ./config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
+  - ./config/dynamic_settings.yml:/usr/src/app/config/dynamic_settings.yml:ro
+  - ./config/delayed_jobs.yml:/usr/src/app/config/delayed_jobs.yml:ro
+  - canvas_files:/usr/src/app/tmp/files
+  - canvas_log:/usr/src/app/log
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - canvas_pg_data:/var/lib/postgresql/data
+    networks: [canvas-internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - canvas_redis_data:/data
+    networks: [canvas-internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+  web:
+    image: canvas-lms:local
+    env_file: [.env]
+    environment:
+      RAILS_ENV: production
+    volumes: *canvas-config
+    ports:
+      - "127.0.0.1:3002:80"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks:
+      canvas-internal: {}
+      edge:
+        aliases: [canvas]
+    restart: unless-stopped
+
+  jobs:
+    image: canvas-lms:local
+    env_file: [.env]
+    environment:
+      RAILS_ENV: production
+    command: ["bundle", "exec", "script/delayed_job", "run"]
+    volumes: *canvas-config
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [canvas-internal]
+    restart: unless-stopped

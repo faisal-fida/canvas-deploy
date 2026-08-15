@@ -1,0 +1,4 @@
+.env
+.admin-credentials.txt
+config/database.yml
+config/security.yml
