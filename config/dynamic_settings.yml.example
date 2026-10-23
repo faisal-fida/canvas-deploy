@@ -1,0 +1,19 @@
+# Copy to dynamic_settings.yml (gitignored: it holds private keys).
+# lti-keys sign LTI 1.3 launches. Without them every launch fails with
+# "undefined method 'sign' for nil". Generate the three keys once:
+#   docker compose run --rm -T web bundle exec rails runner '
+#     keys = %w[past present future].each_with_index.map { |w, i| ["jwk-#{w}.json",
+#       OpenSSL::PKey::RSA.generate(2048).to_jwk(kid: (Time.now.utc - (2 - i) * 2_592_000).iso8601).to_json] }
+#     puts({ "production" => { "config" => { "canvas" => {} },
+#       "store" => { "canvas" => { "lti-keys" => keys.to_h } } } }.to_yaml)' \
+#     | sed -n '/^---/,$p' > config/dynamic_settings.yml
+#   chmod 644 config/dynamic_settings.yml   # the container user must read it
+production:
+  config:
+    canvas:
+  store:
+    canvas:
+      lti-keys:
+        jwk-past.json: "generate"
+        jwk-present.json: "generate"
+        jwk-future.json: "generate"

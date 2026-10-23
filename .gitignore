@@ -2,3 +2,4 @@
 .admin-credentials.txt
 config/database.yml
 config/security.yml
+config/dynamic_settings.yml
